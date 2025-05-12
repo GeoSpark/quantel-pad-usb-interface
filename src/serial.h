@@ -25,21 +25,9 @@
 
 #ifndef SERIAL_H
 #define SERIAL_H
-
-#include "config.h"
-#include <stdbool.h>
-
-#include "quantel.h"
-#include "pico/time.h"
-
-typedef void (*packet_received_cb)(status_t*, pen_data_t*, uint8_t*);
+#include <stdint.h>
 
 void setup_uart();
-
-#if SIMULATED_INPUT
-bool repeating_timer_callback(struct repeating_timer *t);
-#endif
-
-void send_packet_task();
+void send_to_pb(uint8_t data);
 
 #endif //SERIAL_H

@@ -35,10 +35,6 @@
 #include "hardware/gpio.h"
 #include "hardware/uart.h"
 
-#if SIMULATED_INPUT
-#include "test_data2.h"
-#endif
-
 #define UART_PAD uart0
 #define UART_PAD_TX 0
 #define UART_PAD_RX 1
@@ -85,27 +81,6 @@ void setup_uart() {
     // irq_set_enabled(UART1_IRQ, false);
 }
 
-#if SIMULATED_INPUT
-// Timer callback to trigger packet sending
-bool repeating_timer_callback(struct repeating_timer *t) {
-    send_packet = true;
-
-    static size_t index = 0;
-
-    index = (index + 1) % (sizeof(test_data) / QUANTEL_PACKET_SIZE);
-
-    memcpy(send_buf, test_data + index * QUANTEL_PACKET_SIZE, QUANTEL_PACKET_SIZE);
-
-    return true; // keep repeating
-}
-#endif
-
-void send_packet_task() {
-    if (!send_packet) {
-        return;
-    }
-
-    send_packet = false;
-
-    uart_write_blocking(UART_PB, send_buf, QUANTEL_PACKET_SIZE);
+void send_to_pb(uint8_t data) {
+    uart_putc(UART_PB, data);
 }

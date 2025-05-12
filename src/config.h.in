@@ -1,7 +1,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#cmakedefine01 SIMULATED_INPUT
 #define RS422_BAUD 9600
 
 #endif

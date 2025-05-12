@@ -18,7 +18,7 @@ set(TOP ${PICO_TINYUSB_PATH})
 #    set(PICO_STDIO_USB_CONNECT_WAIT_TIMEOUT_MS 3000)
 #endif()
 
-#set(PICO_STDIO_USB_ENABLE_RESET_VIA_BAUD_RATE 1)
+set(PICO_STDIO_USB_ENABLE_RESET_VIA_BAUD_RATE 1)
 
 # initialize the Raspberry Pi Pico SDK
 pico_sdk_init()
@@ -32,8 +32,6 @@ add_compile_options(-Wall
 if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     add_compile_options(-Wno-maybe-uninitialized)
 endif()
-
-option(SIMULATED_INPUT "Simulate serial data with a recorded stream" ON)
 
 configure_file(${CMAKE_CURRENT_LIST_DIR}/src/config.h.in ${CMAKE_CURRENT_LIST_DIR}/src/config.h)
 
