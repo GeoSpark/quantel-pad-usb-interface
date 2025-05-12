@@ -33,10 +33,15 @@ if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     add_compile_options(-Wno-maybe-uninitialized)
 endif()
 
+option(SIMULATED_INPUT "Simulate serial data with a recorded stream" ON)
+
+configure_file(${CMAKE_CURRENT_LIST_DIR}/src/config.h.in ${CMAKE_CURRENT_LIST_DIR}/src/config.h)
+
 add_executable(quantel_pad_usb_interface)
 
 target_sources(quantel_pad_usb_interface PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/src/main.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/serial.c
         ${CMAKE_CURRENT_LIST_DIR}/src/usb/usb_descriptors.c
         ${CMAKE_CURRENT_LIST_DIR}/src/usb/usb_quantel.c
         ${CMAKE_CURRENT_LIST_DIR}/src/quantel/quantel.c
@@ -48,7 +53,6 @@ target_include_directories(quantel_pad_usb_interface PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/src/usb
         ${CMAKE_CURRENT_LIST_DIR}/src/quantel
 )
-
 
 # pull in common dependencies
 target_link_libraries(quantel_pad_usb_interface PUBLIC pico_stdlib pico_unique_id tinyusb_device tinyusb_board)

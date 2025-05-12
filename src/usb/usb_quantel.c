@@ -32,13 +32,6 @@
 
 #include <string.h>
 
-#define SIMULATED_INPUT 1
-
-#if SIMULATED_INPUT
-#include "pico/time.h"
-#include "test_data2.h"
-#endif
-
 #define MAX_KEY_ROLLOVER 6
 
 uint8_t modifier_keys = 0;
@@ -49,29 +42,14 @@ status_t status;
 pen_data_t pen_data;
 uint8_t keycode;
 
-#if SIMULATED_INPUT
-void get_simulated_packet() {
-    bool valid = false;
-    static size_t index = 0;
-
-    while (!valid) {
-        for (uint8_t i = 0; i < QUANTEL_PACKET_SIZE; i++) {
-            valid = handle_packet(test_data[index][i], &status, &pen_data, &keycode);
-        }
-
-        index = (index + 1) % (sizeof(test_data) / QUANTEL_PACKET_SIZE);
-    }
-
-    sleep_ms(10);
-}
-#endif
-
-void get_uart_packet() {
+bool get_uart_packet() {
     bool valid = false;
 
-    while (uart_is_readable(uart1) && !valid) {
-        valid = handle_packet(uart_getc(uart1), &status, &pen_data, &keycode);
+    while (uart_is_readable(uart0)) {
+        valid = handle_packet(uart_getc(uart0), &status, &pen_data, &keycode);
     }
+
+    return valid;
 }
 
 void handle_key_state(const uint8_t keycode, const bool key_up) {
@@ -106,18 +84,16 @@ void handle_key_state(const uint8_t keycode, const bool key_up) {
     }
 }
 
-void get_next_packet(hid_quantel_tablet_report_t* tablet, hid_quantel_rat_report_t* rat,
+bool get_next_packet(hid_quantel_tablet_report_t* tablet, hid_quantel_rat_report_t* rat,
                      hid_keyboard_report_t* keyboard) {
-#if SIMULATED_INPUT
-    get_simulated_packet();
-#else
-    get_uart_packet();
-#endif
+    if (!get_uart_packet()) {
+        return false;
+    }
 
     // Accounts for tip switch and tip proximity.
     tablet->flags = (pen_data.pressure > 0) | (status.has_pen_data << 1);
-    tablet->x = status.has_pen_data ? pen_data.x : 0;
-    tablet->y = status.has_pen_data ? pen_data.y : 0;
+    tablet->x = (int16_t)(status.has_pen_data ? pen_data.x : 0);
+    tablet->y = (int16_t)(status.has_pen_data ? pen_data.y : 0);
     tablet->tip_pressure = pen_data.pressure;
 
     board_led_write(tablet->flags & 0x02);
@@ -127,8 +103,8 @@ void get_next_packet(hid_quantel_tablet_report_t* tablet, hid_quantel_rat_report
     rat->button_3 = status.button_3;
     rat->button_4 = status.button_4;
     rat->button_5 = status.button_5;
-    rat->x = status.joystick_right - status.joystick_left;
-    rat->y = status.joystick_down - status.joystick_up;
+    rat->x = (int8_t)(status.joystick_right - status.joystick_left);
+    rat->y = (int8_t)(status.joystick_down - status.joystick_up);
 
     if (status.has_keycode) {
         handle_key_state(keycode, status.key_up);
@@ -141,4 +117,6 @@ void get_next_packet(hid_quantel_tablet_report_t* tablet, hid_quantel_rat_report
     keyboard->keycode[3] = key_rollover[3];
     keyboard->keycode[4] = key_rollover[4];
     keyboard->keycode[5] = key_rollover[5];
+
+    return true;
 }

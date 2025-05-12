@@ -25,6 +25,7 @@
 
 #include <string.h>
 
+#include "serial.h"
 #include "usb/usb_descriptors.h"
 #include "usb/usb_quantel.h"
 
@@ -32,27 +33,9 @@
 #include "tusb.h"
 #include "pico/bootrom.h"
 
-//--------------------------------------------------------------------+
-// MACRO CONSTANT TYPEDEF PROTYPES
-//--------------------------------------------------------------------+
-
-/* Blink pattern
- * - 250 ms  : device not mounted
- * - 1000 ms : device mounted
- * - 2500 ms : device is suspended
- */
-enum {
-    BLINK_NOT_MOUNTED = 250,
-    BLINK_MOUNTED = 1000,
-    BLINK_SUSPENDED = 2500,
-};
-
-static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
 hid_quantel_tablet_report_t tablet;
 hid_quantel_rat_report_t rat;
 hid_keyboard_report_t keyboard;
-
-void led_blinking_task(void);
 
 void hid_task(void);
 
@@ -67,6 +50,11 @@ int main(void) {
         board_init_after_tusb();
     }
     board_led_write(false);
+    setup_uart();
+
+#if SIMULATED_INPUT
+    add_repeating_timer_ms(10, repeating_timer_callback, NULL, NULL);
+#endif
 
     // ReSharper disable once CppDFAEndlessLoop
     while (1) {
@@ -75,10 +63,9 @@ int main(void) {
             reset_usb_boot(0, 0);
         }
 
+        send_packet_task();
         tud_task();
-        // led_blinking_task();
         hid_task();
-
     }
 }
 
@@ -88,25 +75,20 @@ int main(void) {
 
 // Invoked when device is mounted
 void tud_mount_cb(void) {
-    blink_interval_ms = BLINK_MOUNTED;
 }
 
 // Invoked when device is unmounted
 void tud_umount_cb(void) {
-    blink_interval_ms = BLINK_NOT_MOUNTED;
 }
 
 // Invoked when usb bus is suspended
 // remote_wakeup_en : if host allow us  to perform remote wakeup
 // Within 7ms, device must draw an average of current less than 2.5 mA from bus
 void tud_suspend_cb(const bool remote_wakeup_en) {
-    (void) remote_wakeup_en;
-    blink_interval_ms = BLINK_SUSPENDED;
 }
 
 // Invoked when usb bus is resumed
 void tud_resume_cb(void) {
-    blink_interval_ms = tud_mounted() ? BLINK_MOUNTED : BLINK_NOT_MOUNTED;
 }
 
 //--------------------------------------------------------------------+
@@ -139,18 +121,11 @@ static void send_hid_report(const uint8_t report_id) {
 
 // tud_hid_report_complete_cb() is used to send the next report after previous one is complete.
 void hid_task(void) {
-    // Blocks until a packet is received.
-    get_next_packet(&tablet, &rat, &keyboard);
-
-    // Remote wakeup
-    if (tud_suspended()) {
-        // Wake up host if we are in suspend mode
-        // and REMOTE_WAKEUP feature is enabled by host
-        tud_remote_wakeup();
-    } else {
-        // Send the 1st of report chain, the rest will be sent by tud_hid_report_complete_cb()
-        send_hid_report(REPORT_ID_KEYBOARD);
+    if (!get_next_packet(&tablet, &rat, &keyboard)) {
+        return;
     }
+    // Send the 1st of report chain, the rest will be sent by tud_hid_report_complete_cb()
+    send_hid_report(REPORT_ID_KEYBOARD);
 }
 
 // Invoked when sent REPORT successfully to host
@@ -207,24 +182,6 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
     //         }
     //     }
     // }
-}
-
-//--------------------------------------------------------------------+
-// BLINKING TASK
-//--------------------------------------------------------------------+
-void led_blinking_task(void) {
-    static uint32_t start_ms = 0;
-    static bool led_state = false;
-
-    // blink is disabled
-    if (!blink_interval_ms) return;
-
-    // Blink every interval ms
-    if (board_millis() - start_ms < blink_interval_ms) return; // not enough time
-    start_ms += blink_interval_ms;
-
-    board_led_write(led_state);
-    led_state = 1 - led_state; // toggle
 }
 
 // void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts) {

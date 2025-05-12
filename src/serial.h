@@ -23,11 +23,19 @@
  *
  */
 
-#ifndef USB_QUANTEL_H
-#define USB_QUANTEL_H
+#ifndef SERIAL_H
+#define SERIAL_H
 
-#include "usb_descriptors.h"
+#include "config.h"
+#include <stdbool.h>
+#include "pico/time.h"
 
-bool get_next_packet(hid_quantel_tablet_report_t* tablet, hid_quantel_rat_report_t* rat, hid_keyboard_report_t* keyboard);
+void setup_uart();
 
-#endif //USB_QUANTEL_H
+#if SIMULATED_INPUT
+bool repeating_timer_callback(struct repeating_timer *t);
+#endif
+
+void send_packet_task();
+
+#endif //SERIAL_H
