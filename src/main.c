@@ -23,6 +23,7 @@
  *
  */
 
+#include <ctype.h>
 #include <string.h>
 
 #include "serial.h"
@@ -38,13 +39,18 @@ hid_quantel_rat_report_t rat;
 hid_keyboard_report_t keyboard;
 
 void hid_task(void);
+void cdc_task(void);
 
 /*------------- MAIN -------------*/
 int main(void) {
     board_init();
 
     // init device stack on configured roothub port
-    tud_init(BOARD_TUD_RHPORT);
+    tusb_rhport_init_t dev_init = {
+        .role = TUSB_ROLE_DEVICE,
+        .speed = TUSB_SPEED_AUTO
+      };
+    tusb_init(BOARD_TUD_RHPORT, &dev_init);
 
     if (board_init_after_tusb) {
         board_init_after_tusb();
@@ -53,12 +59,12 @@ int main(void) {
     setup_uart();
 
 #if SIMULATED_INPUT
-    add_repeating_timer_ms(10, repeating_timer_callback, NULL, NULL);
+    // board_led_write(add_repeating_timer_ms(10, repeating_timer_callback, NULL, NULL));
 #endif
 
     // ReSharper disable once CppDFAEndlessLoop
     while (1) {
-        board_led_write(false);
+        // board_led_write(false);
         // Put the board into BOOTSEL mode when we press the button.
         if (board_button_read()) {
             reset_usb_boot(0, 0);
@@ -67,7 +73,8 @@ int main(void) {
         // send_packet_task();
         // board_led_write(true);
         tud_task();
-        // hid_task();
+        hid_task();
+        cdc_task();
     }
 }
 
@@ -190,11 +197,61 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
     // }
 }
 
-// void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts) {
-//     (void) itf;
-//     (void) rts;
-//
-//     if (dtr) {
-//         tud_cdc_write_str("Connected\n");
-//     }
-// }
+// echo to either Serial0 or Serial1
+// with Serial0 as all lower case, Serial1 as all upper case
+static void echo_serial_port(uint8_t itf, uint8_t buf[], uint32_t count) {
+    uint8_t const case_diff = 'a' - 'A';
+
+    for (uint32_t i = 0; i < count; i++) {
+        if (itf == 0) {
+            // echo back 1st port as lower case
+            if (isupper(buf[i])) buf[i] += case_diff;
+        } else {
+            // echo back 2nd port as upper case
+            if (islower(buf[i])) buf[i] -= case_diff;
+        }
+
+        tud_cdc_n_write_char(itf, buf[i]);
+    }
+    tud_cdc_n_write_flush(itf);
+}
+
+void cdc_task(void) {
+    uint8_t itf;
+
+    for (itf = 0; itf < CFG_TUD_CDC; itf++) {
+        // connected() check for DTR bit
+        // Most but not all terminal client set this when making connection
+        // if ( tud_cdc_n_connected(itf) )
+        {
+            if (tud_cdc_n_available(itf)) {
+                uint8_t buf[64];
+
+                uint32_t count = tud_cdc_n_read(itf, buf, sizeof(buf));
+
+                // echo back to both serial ports
+                echo_serial_port(0, buf, count);
+            }
+        }
+    }
+}
+
+// Invoked when cdc when line state changed e.g connected/disconnected
+// Use to reset to DFU when disconnect with 1200 bps
+void tud_cdc_line_state_cb(uint8_t instance, bool dtr, bool rts) {
+    (void)rts;
+
+    // DTR = false is counted as disconnected
+    if (!dtr) {
+        // touch1200 only with first CDC instance (Serial)
+        if (instance == 0) {
+            cdc_line_coding_t coding;
+            tud_cdc_get_line_coding(&coding);
+            if (coding.bit_rate == 1200) {
+                if (board_reset_to_bootloader) {
+                    board_reset_to_bootloader();
+                }
+            }
+        }
+    }
+}
