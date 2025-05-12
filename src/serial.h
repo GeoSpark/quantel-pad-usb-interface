@@ -28,7 +28,11 @@
 
 #include "config.h"
 #include <stdbool.h>
+
+#include "quantel.h"
 #include "pico/time.h"
+
+typedef void (*packet_received_cb)(status_t*, pen_data_t*, uint8_t*);
 
 void setup_uart();
 

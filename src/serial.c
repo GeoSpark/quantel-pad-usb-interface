@@ -50,6 +50,19 @@
 volatile bool send_packet = false;
 uint8_t send_buf[QUANTEL_PACKET_SIZE];
 
+// status_t status;
+// pen_data_t pen_data;
+// uint8_t keycode;
+// volatile bool valid = false;
+
+// void on_rx_pad() {
+//     valid = false;
+//
+//     while (uart_is_readable(UART_PAD) && !valid) {
+//         valid = handle_packet(uart_getc(UART_PAD), &status, &pen_data, &keycode);
+//     }
+// }
+
 void setup_uart() {
     // UART0 for receiving data from the PAD
     uart_init(UART_PAD, RS422_BAUD);
@@ -57,7 +70,7 @@ void setup_uart() {
     gpio_set_function(UART_PAD_RX, GPIO_FUNC_UART);
     uart_set_hw_flow(UART_PAD, false, false);
     uart_set_format(UART_PAD, 8, 1, UART_PARITY_NONE);
-    // uart_set_fifo_enabled(UART_PAD, false);
+    // uart_set_fifo_enabled(UART_PAD, true);
     // irq_set_exclusive_handler(UART0_IRQ, on_rx_pad);
     // irq_set_enabled(UART0_IRQ, true);
     // uart_set_irq_enables(UART_PAD, true, false);

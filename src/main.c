@@ -58,14 +58,16 @@ int main(void) {
 
     // ReSharper disable once CppDFAEndlessLoop
     while (1) {
+        board_led_write(false);
         // Put the board into BOOTSEL mode when we press the button.
         if (board_button_read()) {
             reset_usb_boot(0, 0);
         }
 
-        send_packet_task();
+        // send_packet_task();
+        // board_led_write(true);
         tud_task();
-        hid_task();
+        // hid_task();
     }
 }
 
@@ -162,6 +164,10 @@ uint16_t tud_hid_get_report_cb(uint8_t instance, uint8_t report_id, hid_report_t
 void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_t report_type, uint8_t const* buffer,
                            uint16_t bufsize) {
     (void) instance;
+    (void) report_id;
+    (void) report_type;
+    (void) buffer;
+    (void) bufsize;
     //
     // if (report_type == HID_REPORT_TYPE_OUTPUT) {
     //     // Set keyboard LED e.g Capslock, Numlock etc...
