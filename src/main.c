@@ -23,17 +23,13 @@
  *
  */
 
-#include <string.h>
-
 #include "serial.h"
 #include "hid.h"
 #include "cdc.h"
-#include "usb/usb_descriptors.h"
 
 #include "bsp/board_api.h"
 #include "tusb.h"
 #include "pico/bootrom.h"
-
 
 int main(void) {
     board_init();
@@ -43,25 +39,37 @@ int main(void) {
         .role = TUSB_ROLE_DEVICE,
         .speed = TUSB_SPEED_AUTO
       };
+
     tusb_init(BOARD_TUD_RHPORT, &dev_init);
 
     if (board_init_after_tusb) {
         board_init_after_tusb();
     }
-    board_led_write(false);
+
     setup_uart();
+
+    uint8_t buffer[64];
+    send_mode_t send_mode = FROM_PAD;
+
+    board_led_write(true);
 
     // ReSharper disable once CppDFAEndlessLoop
     while (1) {
-        // board_led_write(false);
         // Put the board into BOOTSEL mode when we press the button.
         if (board_button_read()) {
             reset_usb_boot(0, 0);
         }
 
         tud_task();
-        hid_task();
-        cdc_task();
-        board_led_write(false);
+        cdc_task(&send_mode);
+
+        if (send_mode == FROM_PAD) {
+            const uint8_t len = read_from_pad(buffer, 64);
+
+            if (len > 0) {
+                cdc_write_packet(buffer, len);
+                hid_task(buffer, len);
+            }
+        }
     }
 }

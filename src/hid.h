@@ -26,6 +26,6 @@
 #ifndef HID_H
 #define HID_H
 
-void hid_task();
+void hid_task(uint8_t* serial_buffer, uint8_t len);
 
 #endif //HID_H

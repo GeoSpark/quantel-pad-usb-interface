@@ -25,7 +25,11 @@
 
 #ifndef CDC_H
 #define CDC_H
+#include <stdint.h>
 
-void cdc_task();
+#include "serial.h"
+
+void cdc_task(send_mode_t* send_mode);
+void cdc_write_packet(uint8_t* packet, uint8_t len);
 
 #endif //CDC_H

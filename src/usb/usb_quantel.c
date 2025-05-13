@@ -24,13 +24,10 @@
  */
 
 #include "../quantel/quantel.h"
+#include "../serial.h"
 #include "usb_descriptors.h"
 #include "bsp/board_api.h"
 #include "class/hid/hid.h"
-#include "pico/stdlib.h"
-#include "hardware/uart.h"
-
-#include <string.h>
 
 #define MAX_KEY_ROLLOVER 6
 
@@ -41,16 +38,6 @@ uint8_t key_rollover[MAX_KEY_ROLLOVER] = {
 status_t status;
 pen_data_t pen_data;
 uint8_t keycode;
-
-bool get_uart_packet() {
-    bool valid = false;
-
-    while (uart_is_readable(uart0)) {
-        valid = handle_packet(uart_getc(uart0), &status, &pen_data, &keycode);
-    }
-
-    return valid;
-}
 
 void handle_key_state(const uint8_t keycode, const bool key_up) {
     const uint8_t usb_keycode = map_keycode(keycode);
@@ -84,9 +71,10 @@ void handle_key_state(const uint8_t keycode, const bool key_up) {
     }
 }
 
-bool get_next_packet(hid_quantel_tablet_report_t* tablet, hid_quantel_rat_report_t* rat,
+bool parse_packet(uint8_t data, hid_quantel_tablet_report_t* tablet, hid_quantel_rat_report_t* rat,
                      hid_keyboard_report_t* keyboard) {
-    if (!get_uart_packet()) {
+
+    if (!handle_packet(data, &status, &pen_data, &keycode)) {
         return false;
     }
 

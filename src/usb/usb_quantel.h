@@ -28,6 +28,6 @@
 
 #include "usb_descriptors.h"
 
-bool get_next_packet(hid_quantel_tablet_report_t* tablet, hid_quantel_rat_report_t* rat, hid_keyboard_report_t* keyboard);
+bool parse_packet(uint8_t data, hid_quantel_tablet_report_t* tablet, hid_quantel_rat_report_t* rat, hid_keyboard_report_t* keyboard);
 
 #endif //USB_QUANTEL_H

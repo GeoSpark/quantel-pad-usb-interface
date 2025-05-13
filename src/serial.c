@@ -34,6 +34,7 @@
 
 #include "hardware/gpio.h"
 #include "hardware/uart.h"
+#include "hardware/sync.h"
 
 #define UART_PAD uart0
 #define UART_PAD_TX 0
@@ -43,21 +44,17 @@
 #define UART_PB_TX 4
 #define UART_PB_RX 5
 
-volatile bool send_packet = false;
-uint8_t send_buf[QUANTEL_PACKET_SIZE];
+uint8_t read_from_pad(uint8_t* serial_buffer, uint8_t len) {
+    uint8_t buffer_index = 0;
 
-// status_t status;
-// pen_data_t pen_data;
-// uint8_t keycode;
-// volatile bool valid = false;
+    while (uart_is_readable(UART_PAD) && buffer_index < len) {
+        const uint8_t c = uart_getc(UART_PAD);
+        serial_buffer[buffer_index++] = c;
+        send_to_pb(c);
+    }
 
-// void on_rx_pad() {
-//     valid = false;
-//
-//     while (uart_is_readable(UART_PAD) && !valid) {
-//         valid = handle_packet(uart_getc(UART_PAD), &status, &pen_data, &keycode);
-//     }
-// }
+    return buffer_index;
+}
 
 void setup_uart() {
     // UART0 for receiving data from the PAD
@@ -66,10 +63,6 @@ void setup_uart() {
     gpio_set_function(UART_PAD_RX, GPIO_FUNC_UART);
     uart_set_hw_flow(UART_PAD, false, false);
     uart_set_format(UART_PAD, 8, 1, UART_PARITY_NONE);
-    // uart_set_fifo_enabled(UART_PAD, true);
-    // irq_set_exclusive_handler(UART0_IRQ, on_rx_pad);
-    // irq_set_enabled(UART0_IRQ, true);
-    // uart_set_irq_enables(UART_PAD, true, false);
 
     // UART1 for sending data to the PB
     uart_init(UART_PB, RS422_BAUD);
@@ -77,8 +70,6 @@ void setup_uart() {
     gpio_set_function(UART_PB_RX, GPIO_FUNC_UART);
     uart_set_hw_flow(UART_PB, false, false);
     uart_set_format(UART_PB, 8, 1, UART_PARITY_NONE);
-    // uart_set_fifo_enabled(UART_PB, true);
-    // irq_set_enabled(UART1_IRQ, false);
 }
 
 void send_to_pb(uint8_t data) {

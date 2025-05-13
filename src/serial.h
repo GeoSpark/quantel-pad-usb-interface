@@ -25,9 +25,17 @@
 
 #ifndef SERIAL_H
 #define SERIAL_H
+
+#include <stdbool.h>
 #include <stdint.h>
+
+typedef enum {
+    FROM_PAD,
+    FROM_USB
+} send_mode_t;
 
 void setup_uart();
 void send_to_pb(uint8_t data);
+uint8_t read_from_pad(uint8_t* serial_buffer, uint8_t len);
 
 #endif //SERIAL_H

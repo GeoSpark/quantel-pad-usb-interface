@@ -29,28 +29,51 @@
 #include "tusb.h"
 #include "pico/bootrom.h"
 
+#define MODE_SWITCH_LIMIT 3
 
+uint8_t mode_switch_count = 0;
 
-void cdc_task() {
-    if (tud_cdc_n_available(0)) {
-        uint8_t buf[64];
+// Write data coming in from the PAD to the USB serial interface.
+void cdc_write_packet(uint8_t* packet, uint8_t len) {
+    if (!tud_cdc_n_available(0)) {
+        return;
+    }
 
-        const uint8_t count = tud_cdc_n_read(0, buf, sizeof(buf));
+    tud_cdc_n_write(0, packet, len);
+    tud_cdc_n_write_flush(0);
+}
 
-        for (uint8_t i = 0; i < count; i++) {
+// Write data coming in from the USB serial interface to the Paintbox.
+// If we receive an 0xff, eat it. If we receive MODE_SWITCH_LIMIT in a row, change mode.
+// We should probably have a separate CDC channel for commands...
+void cdc_task(send_mode_t* send_mode) {
+    if (!tud_cdc_n_available(0)) {
+        return;
+    }
+
+    uint8_t buf[64];
+
+    const uint8_t count = tud_cdc_n_read(0, buf, sizeof(buf));
+
+    for (uint8_t i = 0; i < count; i++) {
+        if (buf[i] == 0xff) {
+            mode_switch_count++;
+            if (mode_switch_count == MODE_SWITCH_LIMIT) {
+                *send_mode = *send_mode == FROM_USB ? FROM_PAD : FROM_USB;
+                mode_switch_count = 0;
+            }
+        } else if (*send_mode == FROM_USB) {
+            mode_switch_count = 0;
             send_to_pb(buf[i]);
-            tud_cdc_n_write_char(0, buf[i]);
+        } else {
+            mode_switch_count = 0;
         }
-
-        tud_cdc_n_write_flush(0);
     }
 }
 
-// Invoked when cdc when line state changed e.g connected/disconnected
+// Invoked when CDC line state changed e.g connected/disconnected
 // Use to reset to DFU when disconnect with 1200 bps
-void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts) {
-    (void)rts;
-
+void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool /*rts*/) {
     // DTR = false is counted as disconnected
     if (!dtr) {
         // touch1200 only with first CDC instance (Serial)

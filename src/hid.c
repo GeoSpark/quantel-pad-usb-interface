@@ -35,7 +35,6 @@ hid_keyboard_report_t keyboard;
 
 
 static void send_hid_report(const uint8_t report_id) {
-    // skip if hid is not ready yet
     if (!tud_hid_ready()) {
         return;
     }
@@ -58,25 +57,19 @@ static void send_hid_report(const uint8_t report_id) {
     }
 }
 
-// tud_hid_report_complete_cb() is used to send the next report after previous one is complete.
-void hid_task(void) {
-    if (!get_next_packet(&tablet, &rat, &keyboard)) {
-        return;
+void hid_task(uint8_t* serial_buffer, uint8_t len) {
+    for (uint8_t i = 0; i < len; i++) {
+        if (parse_packet(serial_buffer[i], &tablet, &rat, &keyboard)) {
+            // Send the 1st of report chain, the rest will be sent by tud_hid_report_complete_cb()
+            send_hid_report(REPORT_ID_KEYBOARD);
+        }
     }
-
-    board_led_write(true);
-
-    // Send the 1st of report chain, the rest will be sent by tud_hid_report_complete_cb()
-    send_hid_report(REPORT_ID_KEYBOARD);
 }
 
 // Invoked when sent REPORT successfully to host
 // Application can use this to send the next report
 // Note: For composite reports, report[0] is report ID
-void tud_hid_report_complete_cb(const uint8_t instance, uint8_t const* report, const uint16_t len) {
-    (void) instance;
-    (void) len;
-
+void tud_hid_report_complete_cb(const uint8_t /*instance*/, uint8_t const* report, const uint16_t /*len*/) {
     const uint8_t next_report_id = report[0] + 1u;
 
     if (next_report_id < REPORT_ID_COUNT) {
@@ -89,7 +82,6 @@ void tud_hid_report_complete_cb(const uint8_t instance, uint8_t const* report, c
 // Return zero will cause the stack to STALL request
 uint16_t tud_hid_get_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_t report_type, uint8_t* buffer,
                                uint16_t reqlen) {
-    // TODO not Implemented
     (void) instance;
     (void) report_id;
     (void) report_type;
