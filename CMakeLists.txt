@@ -40,6 +40,8 @@ add_executable(quantel_pad_usb_interface)
 target_sources(quantel_pad_usb_interface PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/src/main.c
         ${CMAKE_CURRENT_LIST_DIR}/src/serial.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/hid.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/cdc.c
         ${CMAKE_CURRENT_LIST_DIR}/src/usb/usb_descriptors.c
         ${CMAKE_CURRENT_LIST_DIR}/src/usb/usb_quantel.c
         ${CMAKE_CURRENT_LIST_DIR}/src/quantel/quantel.c

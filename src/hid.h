@@ -23,45 +23,9 @@
  *
  */
 
-#include <string.h>
+#ifndef HID_H
+#define HID_H
 
-#include "serial.h"
-#include "hid.h"
-#include "cdc.h"
-#include "usb/usb_descriptors.h"
+void hid_task();
 
-#include "bsp/board_api.h"
-#include "tusb.h"
-#include "pico/bootrom.h"
-
-
-int main(void) {
-    board_init();
-
-    // init device stack on configured roothub port
-    tusb_rhport_init_t dev_init = {
-        .role = TUSB_ROLE_DEVICE,
-        .speed = TUSB_SPEED_AUTO
-      };
-    tusb_init(BOARD_TUD_RHPORT, &dev_init);
-
-    if (board_init_after_tusb) {
-        board_init_after_tusb();
-    }
-    board_led_write(false);
-    setup_uart();
-
-    // ReSharper disable once CppDFAEndlessLoop
-    while (1) {
-        // board_led_write(false);
-        // Put the board into BOOTSEL mode when we press the button.
-        if (board_button_read()) {
-            reset_usb_boot(0, 0);
-        }
-
-        tud_task();
-        hid_task();
-        cdc_task();
-        board_led_write(false);
-    }
-}
+#endif //HID_H
