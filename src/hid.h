@@ -27,5 +27,6 @@
 #define HID_H
 
 void hid_task(uint8_t* serial_buffer, uint8_t len);
+void hid_command(send_mode_t* send_mode);
 
 #endif //HID_H

@@ -31,6 +31,7 @@
 #include "tusb.h"
 #include "pico/bootrom.h"
 
+
 int main(void) {
     board_init();
 
@@ -61,15 +62,21 @@ int main(void) {
         }
 
         tud_task();
-        cdc_task(&send_mode);
+        cdc_task();
+        hid_command(&send_mode);
 
         if (send_mode == FROM_PAD) {
+            board_led_write(true);
+
             const uint8_t len = read_from_pad(buffer, 64);
 
             if (len > 0) {
+                send_to_pb(buffer, len);
                 cdc_write_packet(buffer, len);
                 hid_task(buffer, len);
             }
+        } else {
+            board_led_write(false);
         }
     }
 }

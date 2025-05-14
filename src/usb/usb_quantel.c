@@ -84,7 +84,7 @@ bool parse_packet(uint8_t data, hid_quantel_tablet_report_t* tablet, hid_quantel
     tablet->y = (int16_t)(status.has_pen_data ? pen_data.y : 0);
     tablet->tip_pressure = pen_data.pressure;
 
-    board_led_write(tablet->flags & 0x02);
+    // board_led_write(tablet->flags & 0x02);
 
     rat->button_1 = status.button_1;
     rat->button_2 = status.button_2;

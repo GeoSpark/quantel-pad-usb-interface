@@ -44,13 +44,12 @@
 #define UART_PB_TX 4
 #define UART_PB_RX 5
 
-uint8_t read_from_pad(uint8_t* serial_buffer, uint8_t len) {
+uint8_t read_from_pad(uint8_t* data, uint8_t len) {
     uint8_t buffer_index = 0;
 
     while (uart_is_readable(UART_PAD) && buffer_index < len) {
         const uint8_t c = uart_getc(UART_PAD);
-        serial_buffer[buffer_index++] = c;
-        send_to_pb(c);
+        data[buffer_index++] = c;
     }
 
     return buffer_index;
@@ -61,17 +60,17 @@ void setup_uart() {
     uart_init(UART_PAD, RS422_BAUD);
     gpio_set_function(UART_PAD_TX, GPIO_FUNC_UART);
     gpio_set_function(UART_PAD_RX, GPIO_FUNC_UART);
-    uart_set_hw_flow(UART_PAD, false, false);
+    // uart_set_hw_flow(UART_PAD, false, false);
     uart_set_format(UART_PAD, 8, 1, UART_PARITY_NONE);
 
     // UART1 for sending data to the PB
     uart_init(UART_PB, RS422_BAUD);
     gpio_set_function(UART_PB_TX, GPIO_FUNC_UART);
     gpio_set_function(UART_PB_RX, GPIO_FUNC_UART);
-    uart_set_hw_flow(UART_PB, false, false);
+    // uart_set_hw_flow(UART_PB, false, false);
     uart_set_format(UART_PB, 8, 1, UART_PARITY_NONE);
 }
 
-void send_to_pb(uint8_t data) {
-    uart_putc(UART_PB, data);
+void send_to_pb(const uint8_t* data, uint8_t len) {
+    uart_write_blocking(UART_PB, data, len);
 }

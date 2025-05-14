@@ -82,33 +82,46 @@ uint8_t const desc_hid_report[] =
   TUD_HID_REPORT_DESC_QUANTEL_RAT     ( HID_REPORT_ID( REPORT_ID_RAT      )),
 };
 
-// Invoked when received GET HID REPORT DESCRIPTOR
-// Application return pointer to descriptor
-// Descriptor contents must exist long enough for transfer to complete
-uint8_t const * tud_hid_descriptor_report_cb(const uint8_t instance)
-{
-  (void) instance;
-  return desc_hid_report;
-}
-
-//--------------------------------------------------------------------+
-// Configuration Descriptor
-//--------------------------------------------------------------------+
+uint8_t const desc_hid_command_report[] = {
+  TUD_HID_REPORT_DESC_GENERIC_INOUT   ( CFG_TUD_HID_EP_BUFSIZE, HID_REPORT_ID( REPORT_ID_COMMAND )),
+};
 
 enum
 {
   ITF_NUM_CDC,
   ITF_NUM_CDC_DATA,
   ITF_NUM_HID,
+  ITF_NUM_HID_COMMAND,
   ITF_NUM_TOTAL
 };
 
-#define  CONFIG_TOTAL_LEN  (TUD_CONFIG_DESC_LEN + TUD_HID_DESC_LEN + TUD_CDC_DESC_LEN)
+// Invoked when received GET HID REPORT DESCRIPTOR
+// Application return pointer to descriptor
+// Descriptor contents must exist long enough for transfer to complete
+uint8_t const * tud_hid_descriptor_report_cb(const uint8_t itf)
+{
+  if (itf == 0) {
+    return desc_hid_report;
+  }
 
-#define EPNUM_HID       0x83
+  if (itf == 1) {
+    return desc_hid_command_report;
+  }
+
+  return NULL;
+}
+
+//--------------------------------------------------------------------+
+// Configuration Descriptor
+//--------------------------------------------------------------------+
+
+#define  CONFIG_TOTAL_LEN  (TUD_CONFIG_DESC_LEN + TUD_HID_DESC_LEN + TUD_CDC_DESC_LEN + TUD_HID_INOUT_DESC_LEN)
+
 #define EPNUM_CDC_NOTIF 0x81
 #define EPNUM_CDC_OUT   0x02
 #define EPNUM_CDC_IN    0x82
+#define EPNUM_HID       0x83
+#define EPNUM_COMMAND   0x04
 
 uint8_t const desc_configuration[] =
 {
@@ -119,7 +132,10 @@ uint8_t const desc_configuration[] =
   TUD_CDC_DESCRIPTOR(ITF_NUM_CDC, 4, EPNUM_CDC_NOTIF, 8, EPNUM_CDC_OUT, EPNUM_CDC_IN, 64),
 
   // Interface number, string index, protocol, report descriptor len, EP In address, size & polling interval
-  TUD_HID_DESCRIPTOR(ITF_NUM_HID, 0, HID_ITF_PROTOCOL_NONE, sizeof(desc_hid_report), EPNUM_HID, CFG_TUD_HID_EP_BUFSIZE, 5),
+  TUD_HID_DESCRIPTOR(ITF_NUM_HID, 5, HID_ITF_PROTOCOL_NONE, sizeof(desc_hid_report), EPNUM_HID, CFG_TUD_HID_EP_BUFSIZE, 5),
+
+  // Interface number, string index, protocol, report descriptor len, EP Out & In address, size & polling interval
+  TUD_HID_INOUT_DESCRIPTOR(ITF_NUM_HID_COMMAND, 6, HID_ITF_PROTOCOL_NONE, sizeof(desc_hid_command_report), EPNUM_COMMAND, 0x80 | EPNUM_COMMAND, CFG_TUD_HID_EP_BUFSIZE, 10),
 };
 
 // Invoked when received GET CONFIGURATION DESCRIPTOR
@@ -150,7 +166,9 @@ char const *string_desc_arr[] =
   "Quantel",                     // 1: Manufacturer
   "PAD",                 // 2: Product
   NULL,                          // 3: Serials will use unique ID if possible
-  "CDC"
+  "CDC",
+  "PAD",
+  "Command interface"
 };
 
 static uint16_t desc_str[32 + 1];
