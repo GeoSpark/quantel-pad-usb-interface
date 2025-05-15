@@ -30,25 +30,18 @@
 #include "pico/bootrom.h"
 
 // Write data coming in from the PAD to the USB serial interface.
-void cdc_write_packet(uint8_t* packet, uint8_t len) {
-    if (!tud_cdc_n_available(0)) {
-        return;
-    }
-
+void send_to_cdc(uint8_t* packet, uint8_t len) {
     tud_cdc_n_write(0, packet, len);
     tud_cdc_n_write_flush(0);
 }
 
 // Write data coming in from the USB serial interface to the Paintbox.
-void cdc_task() {
+uint8_t read_from_cdc(uint8_t* data, uint8_t len) {
     if (!tud_cdc_n_available(0)) {
-        return;
+        return 0;
     }
 
-    uint8_t buf[64];
-
-    const uint8_t count = tud_cdc_n_read(0, buf, sizeof(buf));
-    send_to_pb(buf, count);
+    return tud_cdc_n_read(0, data, len);
 }
 
 // Invoked when CDC line state changed e.g connected/disconnected

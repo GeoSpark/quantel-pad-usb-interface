@@ -62,21 +62,21 @@ int main(void) {
         }
 
         tud_task();
-        cdc_task();
-        hid_command(&send_mode);
+        process_command(&send_mode);
+        uint8_t len = 0;
 
         if (send_mode == FROM_PAD) {
             board_led_write(true);
-
-            const uint8_t len = read_from_pad(buffer, 64);
-
-            if (len > 0) {
-                send_to_pb(buffer, len);
-                cdc_write_packet(buffer, len);
-                hid_task(buffer, len);
-            }
+            len = read_from_pad(buffer, 64);
         } else {
             board_led_write(false);
+            len = read_from_cdc(buffer, 64);
+        }
+
+        if (len > 0) {
+            send_to_pb(buffer, len);
+            send_to_cdc(buffer, len);
+            send_to_hid(buffer, len);
         }
     }
 }

@@ -27,7 +27,7 @@
 #define CDC_H
 #include <stdint.h>
 
-void cdc_task();
-void cdc_write_packet(uint8_t* packet, uint8_t len);
+uint8_t read_from_cdc(uint8_t* data, uint8_t len);
+void send_to_cdc(uint8_t* packet, uint8_t len);
 
 #endif //CDC_H

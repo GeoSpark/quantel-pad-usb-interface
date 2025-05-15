@@ -47,6 +47,7 @@ static void send_hid_report(const uint8_t report_id) {
             break;
 
         case REPORT_ID_KEYBOARD:
+            board_led_write(true);
             tud_hid_keyboard_report(REPORT_ID_KEYBOARD, keyboard.modifier, keyboard.keycode);
             break;
 
@@ -59,11 +60,11 @@ static void send_hid_report(const uint8_t report_id) {
     }
 }
 
-void hid_command(send_mode_t* send_mode) {
+void process_command(send_mode_t* send_mode) {
     *send_mode = _send_mode;
 }
 
-void hid_task(uint8_t* serial_buffer, uint8_t len) {
+void send_to_hid(uint8_t* serial_buffer, uint8_t len) {
     for (uint8_t i = 0; i < len; i++) {
         if (parse_packet(serial_buffer[i], &tablet, &rat, &keyboard)) {
             // Send the 1st of report chain, the rest will be sent by tud_hid_report_complete_cb()
@@ -75,7 +76,7 @@ void hid_task(uint8_t* serial_buffer, uint8_t len) {
 // Invoked when sent REPORT successfully to host
 // Application can use this to send the next report
 // Note: For composite reports, report[0] is report ID
-void tud_hid_report_complete_cb(const uint8_t /*instance*/, uint8_t const* report, const uint16_t /*len*/) {
+void tud_hid_report_complete_cb(const uint8_t instance, uint8_t const* report, const uint16_t /*len*/) {
     const uint8_t next_report_id = report[0] + 1u;
 
     if (next_report_id < REPORT_ID_COUNT) {
