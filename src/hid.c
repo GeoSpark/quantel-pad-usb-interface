@@ -23,7 +23,7 @@
  *
  */
 
-#include "serial.h"
+#include "commands.h"
 #include "usb/usb_descriptors.h"
 #include "usb/usb_quantel.h"
 
@@ -33,7 +33,6 @@
 hid_quantel_tablet_report_t tablet;
 hid_quantel_rat_report_t rat;
 hid_keyboard_report_t keyboard;
-send_mode_t _send_mode;
 
 
 static void send_hid_report(const uint8_t report_id) {
@@ -58,10 +57,6 @@ static void send_hid_report(const uint8_t report_id) {
         default:
             break;
     }
-}
-
-void process_command(send_mode_t* send_mode) {
-    *send_mode = _send_mode;
 }
 
 void send_to_hid(uint8_t* serial_buffer, uint8_t len) {
@@ -103,13 +98,8 @@ uint16_t tud_hid_get_report_cb(uint8_t instance, uint8_t report_id, hid_report_t
 void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_t report_type, uint8_t const* buffer,
                            uint16_t bufsize) {
     (void) instance;
-    (void) bufsize;
 
     if (report_type == HID_REPORT_TYPE_OUTPUT && report_id == REPORT_ID_COMMAND) {
-        if (buffer[0] == 0x00) {
-            _send_mode = FROM_PAD;
-        } else if (buffer[0] == 0x01) {
-            _send_mode = FROM_USB;
-        }
+        parse_command(buffer, bufsize);
     }
 }

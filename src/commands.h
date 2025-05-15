@@ -23,9 +23,22 @@
  *
  */
 
-#ifndef HID_H
-#define HID_H
+#ifndef COMMANDS_H
+#define COMMANDS_H
 
-void send_to_hid(uint8_t* serial_buffer, uint8_t len);
+#include <stdbool.h>
+#include <stdint.h>
 
-#endif //HID_H
+#include "serial.h"
+
+typedef struct {
+    send_mode_t send_mode;
+    bool pb_output;
+    bool hid_output;
+    bool cdc_output;
+} command_state_t;
+
+void parse_command(uint8_t const* data, uint8_t len);
+command_state_t get_command_state();
+
+#endif //COMMANDS_H

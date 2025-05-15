@@ -26,6 +26,7 @@
 #include "serial.h"
 #include "hid.h"
 #include "cdc.h"
+#include "commands.h"
 
 #include "bsp/board_api.h"
 #include "tusb.h"
@@ -50,7 +51,6 @@ int main(void) {
     setup_uart();
 
     uint8_t buffer[64];
-    send_mode_t send_mode = FROM_PAD;
 
     board_led_write(true);
 
@@ -62,10 +62,10 @@ int main(void) {
         }
 
         tud_task();
-        process_command(&send_mode);
+        const command_state_t state = get_command_state();
         uint8_t len = 0;
 
-        if (send_mode == FROM_PAD) {
+        if (state.send_mode == FROM_PAD) {
             board_led_write(true);
             len = read_from_pad(buffer, 64);
         } else {
@@ -74,9 +74,17 @@ int main(void) {
         }
 
         if (len > 0) {
-            send_to_pb(buffer, len);
-            send_to_cdc(buffer, len);
-            send_to_hid(buffer, len);
+            if (state.pb_output) {
+                send_to_pb(buffer, len);
+            }
+
+            if (state.hid_output) {
+                send_to_hid(buffer, len);
+            }
+
+            if (state.cdc_output) {
+                send_to_cdc(buffer, len);
+            }
         }
     }
 }
