@@ -11,6 +11,12 @@ I have added it as a submodule for this repo. So if your build directory is `bui
 
 ## Technical documentation
 
+The RS422 signals seem to be inverted from convention. Currently I am overriding the UART pins
+but this isn't desperately robust. There are a couple of .pio files that allow us to use another
+pin to invert the signal before it is processed by the UART, but I have disaled that for now because
+it seems like a faff. It would make it a bit more future-proof though, so when I have an idle hour or
+so, I shall implement it properly.
+
 More documentation can be found [here](docs/index.md)
 
 ## Things left to figure out

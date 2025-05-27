@@ -1,0 +1,19 @@
+.program inverted_uart_tx
+
+; Inverted UART TX: idle = low, start bit = high
+; Transmits one byte at a time, LSB first
+
+.wrap_target
+pull                      ; Get next byte
+set x, 7                 ; 8 data bits
+
+; Start bit (inverted = high)
+set pins, 1 [7]
+
+bitloop:
+    out pins, 1 [7]       ; Shift each data bit, LSB first
+    jmp x-- bitloop
+
+; Stop bit (inverted = low)
+set pins, 0 [7]
+.wrap

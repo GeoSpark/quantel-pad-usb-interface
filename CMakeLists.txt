@@ -46,6 +46,8 @@ target_sources(quantel_pad_usb_interface PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/src/usb/usb_descriptors.c
         ${CMAKE_CURRENT_LIST_DIR}/src/usb/usb_quantel.c
         ${CMAKE_CURRENT_LIST_DIR}/src/quantel/quantel.c
+#        ${CMAKE_CURRENT_LIST_DIR}/src/inverted_uart_rx.pio
+#        ${CMAKE_CURRENT_LIST_DIR}/src/inverted_uart_tx.pio
 )
 
 # Make sure TinyUSB can find tusb_config.h
@@ -56,11 +58,22 @@ target_include_directories(quantel_pad_usb_interface PUBLIC
 )
 
 # pull in common dependencies
-target_link_libraries(quantel_pad_usb_interface PUBLIC pico_stdlib pico_unique_id tinyusb_device tinyusb_board)
+target_link_libraries(quantel_pad_usb_interface PUBLIC
+        hardware_pio
+        pico_stdlib
+        pico_unique_id
+        tinyusb_device
+        tinyusb_board
+)
 
 if (PICO_CYW43_SUPPORTED)
     target_link_libraries(quantel_pad_usb_interface pico_cyw43_arch_none)
 endif()
+
+#pico_generate_pio_header(quantel_pad_usb_interface
+#        ${CMAKE_CURRENT_LIST_DIR}/src/inverted_uart_rx.pio
+#        ${CMAKE_CURRENT_LIST_DIR}/src/inverted_uart_tx.pio
+#)
 
 pico_enable_stdio_usb(quantel_pad_usb_interface 0)
 pico_enable_stdio_uart(quantel_pad_usb_interface 1)

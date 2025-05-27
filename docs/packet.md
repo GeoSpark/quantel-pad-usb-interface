@@ -7,8 +7,10 @@
 - Packets are sent regardless of any input, so have to pay attention to key/pen/button flags.
 - The MSb of byte 1 is always 1 to signify the start of a packet. All other bytes have the MSb cleared.
 - Byte 9 is the XOR of each of the other bytes, masked to the least significant 7 bits.
-- Pen position can be negative and uses 2's compliment, and seems to range from about -948, -528 in the top left, to 6759, 5324 in the bottom right.
+- Pen position can be negative and uses 2's compliment, On an A3 tablet, the ranges are around:
+- min_x: -1752, max_x: 6782, min_y: -1100, max_y: 5851, min_pressure: 0, max_pressure: 127
 - Key events are only sent on key transition, so key repeats have to be handled in software.
+  - This may not be entirely true. Testing on my Harriet hardware I am only getting key down events.
 - It's probable that key data and pen data aren't transmitted in the same packet because of the use of byte 3, bit 6 for pen pressure. If so, this would probably be unnoticeable on original hardware because the screen refresh would only be 30 FPS.
 
 ### Packet structure
@@ -25,7 +27,7 @@
 |      | 0    | Joystick left                                                  |
 | 2    | 7    | Always unset                                                   |
 |      | 6    | Button 5, trigger                                              |
-|      | 5    | Unknown - always set?                                          |
+|      | 5    | Unknown - always set? On Harriet this is 0. Used as version?   |
 |      | 4    | Set if key up, unset if key down                               |
 |      | 3    | Button 4                                                       |
 |      | 2    | Button 3                                                       |

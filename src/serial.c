@@ -26,23 +26,25 @@
 #include "config.h"
 #include "serial.h"
 #include "quantel/quantel.h"
+// #include "inverted_uart_rx.pio.h"
+// #include "inverted_uart_tx.pio.h"
+#include "hardware/structs/iobank0.h"
 
 #include <stdbool.h>
 #include <string.h>
-
-#include "time.h"
 
 #include "hardware/gpio.h"
 #include "hardware/uart.h"
 #include "hardware/sync.h"
 
-#define UART_PAD uart0
-#define UART_PAD_TX 0
-#define UART_PAD_RX 1
+#define UART_PAD uart1
+#define UART_PAD_TX 4
+#define UART_PAD_RX 5
 
-#define UART_PB uart1
-#define UART_PB_TX 4
-#define UART_PB_RX 5
+#define UART_PB uart0
+#define UART_PB_TX 0
+#define UART_PB_RX 1
+
 
 uint8_t read_from_pad(uint8_t* data, uint8_t len) {
     uint8_t buffer_index = 0;
@@ -55,19 +57,64 @@ uint8_t read_from_pad(uint8_t* data, uint8_t len) {
     return buffer_index;
 }
 
+void flip_rx_signal_levels() {
+    // ⚠️ Directly inverting RX pin using IOBANK register.
+    //
+    // This bypasses SDK abstraction layers (gpio_set_inover, etc.)
+    // and directly sets INOVER=1 (invert input signal).
+    //
+    // This is intentional for this one-off use case where:
+    // - We're talking to inverted RS422,
+    // - Pin assignment is fixed by hardware,
+    // - No other code or libraries will reconfigure this pin.
+    //
+    // If anything breaks, check this override first.
+
+    uint32_t ctrl_reg = iobank0_hw->io[UART_PAD_RX].ctrl;
+    ctrl_reg &= ~(IO_BANK0_GPIO0_CTRL_INOVER_BITS);       // Clear INOVER bits
+    ctrl_reg |= IO_BANK0_GPIO0_CTRL_INOVER_VALUE_INVERT << IO_BANK0_GPIO0_CTRL_INOVER_LSB;
+    iobank0_hw->io[UART_PAD_RX].ctrl = ctrl_reg;
+}
+
+void flip_tx_signal_levels() {
+    // ⚠️ Directly inverting TX pin using IOBANK register.
+    //
+    // This bypasses SDK abstraction layers (gpio_set_inover, etc.)
+    // and directly sets INOVER=1 (invert input signal).
+    //
+    // This is intentional for this one-off use case where:
+    // - We're talking to inverted RS422,
+    // - Pin assignment is fixed by hardware,
+    // - No other code or libraries will reconfigure this pin.
+    //
+    // If anything breaks, check this override first.
+
+    // Clear previous OUTOVER bits
+    iobank0_hw->io[UART_PB_TX].ctrl &= ~IO_BANK0_GPIO0_CTRL_OUTOVER_BITS;
+
+    // Set OUTOVER to INVERT (value 1) to invert output signal
+    iobank0_hw->io[UART_PB_TX].ctrl |= (UART_PB_TX << IO_BANK0_GPIO0_CTRL_OUTOVER_LSB);
+}
+
 void setup_uart() {
-    // UART0 for receiving data from the PAD
+    // UART1 for receiving data from the PAD
     uart_init(UART_PAD, RS422_BAUD);
     gpio_set_function(UART_PAD_TX, GPIO_FUNC_UART);
     gpio_set_function(UART_PAD_RX, GPIO_FUNC_UART);
-    // uart_set_hw_flow(UART_PAD, false, false);
+    flip_rx_signal_levels();
+    uart_set_baudrate(UART_PAD, RS422_BAUD);
+    uart_set_hw_flow(UART_PAD, false, false);
+    uart_set_fifo_enabled(UART_PAD, true);
     uart_set_format(UART_PAD, 8, 1, UART_PARITY_NONE);
 
-    // UART1 for sending data to the PB
+    // UART0 for sending data to the PB
     uart_init(UART_PB, RS422_BAUD);
     gpio_set_function(UART_PB_TX, GPIO_FUNC_UART);
     gpio_set_function(UART_PB_RX, GPIO_FUNC_UART);
-    // uart_set_hw_flow(UART_PB, false, false);
+    flip_tx_signal_levels();
+    uart_set_baudrate(UART_PB, RS422_BAUD);
+    uart_set_hw_flow(UART_PB, false, false);
+    uart_set_fifo_enabled(UART_PB, true);
     uart_set_format(UART_PB, 8, 1, UART_PARITY_NONE);
 }
 
