@@ -159,14 +159,11 @@ enum {
 };
 
 // Values are derived empirically.
-// -948
-#define QUANTEL_TABLET_MIN_X (0xfc4c)
-// -528
-#define QUANTEL_TABLET_MIN_Y (0xfdf0)
-// 6759
-#define QUANTEL_TABLET_MAX_X (0x1a67)
-// 5324
-#define QUANTEL_TABLET_MAX_Y (0x14cc)
+// min_x: -1752, max_x: 6782, min_y: -1100, max_y: 5851, min_pressure: 0, max_pressure: 127
+#define QUANTEL_TABLET_MIN_X (0xf928)
+#define QUANTEL_TABLET_MIN_Y (0xfbb4)
+#define QUANTEL_TABLET_MAX_X (0x1a7e)
+#define QUANTEL_TABLET_MAX_Y (0x16db)
 
 #define TUD_HID_REPORT_DESC_QUANTEL_TABLET(...)                      \
   HID_USAGE_PAGE ( HID_USAGE_PAGE_DIGITIZER )                      , \
@@ -211,7 +208,7 @@ enum {
     HID_USAGE_PAGE ( HID_USAGE_PAGE_DIGITIZER )                    , \
       HID_USAGE        ( HID_USAGE_DIGITIZER_TIP_PRESSURE         ), \
       HID_LOGICAL_MIN_N  ( 0, 2                                   ), \
-      HID_LOGICAL_MAX_N  ( 0xff, 2                                ), \
+      HID_LOGICAL_MAX_N  ( 0x7f, 2                                ), \
       HID_REPORT_SIZE  ( 16                                       ), /* Only 8 bits are used, but Wireshark fails to parse an unsigned 8-bit value and treats it as -1 */ \
       HID_REPORT_COUNT ( 1                                        ), \
       HID_INPUT        ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE   ), \

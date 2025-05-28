@@ -9,4 +9,4 @@ Where `CNR 'A'` connects to the PAD, and `CNR 'B'` connects to the Paintbox.
 
 The Waveshare interface is RS485, which is a similar protocol but needs only two wires, A and B.
 As the comms is only one way, we can connect the RECV+ and RECV- signals to the A and B terminals on the
-Waveshare board, and tie TXMIT+ and TXMIT- to ground.
+Waveshare board, and pass TXMIT+ and TXMIT- through.
