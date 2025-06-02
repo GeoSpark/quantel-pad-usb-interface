@@ -63,7 +63,7 @@ typedef enum {
 } keyboards_t;
 
 bool handle_packet(uint8_t data, status_t* status, pen_data_t* pen_data, uint8_t* keycode);
-void map_keycode(uint8_t keycode, uint8_t* usb_key, uint8_t* usb_modifiers);
+void map_keycode(uint8_t keycode, uint8_t* usb_key, uint8_t* usb_modifier);
 void set_keyboard(keyboards_t keyboard);
 keyboards_t get_keyboard();
 

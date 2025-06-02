@@ -43,30 +43,26 @@ typedef enum {
 PACKET_STATE current_state = PACKET_STATE_IDLE;
 uint8_t checksum;
 keyboards_t current_keyboard = KBD_AKE079339;
-const uint8_t* keyboard_mapping = USB_HID_MAPPING_AKE079339;
 
-void map_keycode(const uint8_t keycode, uint8_t* usb_key, uint8_t* usb_modifiers) {
+void map_keycode(const uint8_t keycode, uint8_t* usb_key, uint8_t* usb_modifier) {
     if (current_keyboard == KBD_AKE079339) {
-        uint8_t key = keyboard_mapping[keycode];
+        const uint8_t key = USB_HID_MAPPING_AKE079339[keycode];
+
         if (key >= HID_KEY_CONTROL_LEFT && key <= HID_KEY_GUI_RIGHT) {
-            *usb_modifiers = key;
+            *usb_modifier = key;
             *usb_key = HID_KEY_NONE;
         } else {
-            *usb_modifiers = HID_KEY_NONE;
+            *usb_modifier = HID_KEY_NONE;
             *usb_key = key;
         }
     } else if (current_keyboard == KBD_AKE0793091) {
-        // Some complex logic here to extract out modifier keys.
+        const combined_key_t keys = USB_HID_MAPPING_AKE0793091[keycode];
+        *usb_modifier = keys.modifier_key;
+        *usb_key = keys.keycode;
     }
 }
 
 void set_keyboard(keyboards_t keyboard) {
-    if (keyboard == KBD_AKE079339) {
-        keyboard_mapping = USB_HID_MAPPING_AKE079339;
-    } else if (keyboard == KBD_AKE0793091) {
-        keyboard_mapping = USB_HID_MAPPING_AKE0793091;
-    }
-
     current_keyboard = keyboard;
 }
 
