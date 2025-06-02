@@ -38,20 +38,21 @@ uint8_t key_rollover[MAX_KEY_ROLLOVER] = {
 status_t status;
 pen_data_t pen_data;
 uint8_t keycode;
+bool had_keydown = false;
 
 void handle_key_state(const uint8_t keycode, const bool key_up) {
-    const uint8_t usb_keycode = map_keycode(keycode);
+    uint8_t usb_keycode;
+    uint8_t usb_modifier_key;
+    map_keycode(keycode, &usb_keycode, &usb_modifier_key);
 
-    if (usb_keycode >= HID_KEY_CONTROL_LEFT && usb_keycode <= HID_KEY_GUI_RIGHT) {
-        const uint8_t usb_modifier_key = usb_keycode - HID_KEY_CONTROL_LEFT;
+    if (usb_modifier_key >= HID_KEY_CONTROL_LEFT && usb_modifier_key <= HID_KEY_GUI_RIGHT) {
+        const uint8_t key = usb_modifier_key - HID_KEY_CONTROL_LEFT;
 
         if (key_up) {
-            modifier_keys &= ~(1 << usb_modifier_key);
+            modifier_keys &= ~(1 << key);
         } else {
-            modifier_keys |= 1 << usb_modifier_key;
+            modifier_keys |= 1 << key;
         }
-
-        return;
     }
 
     if (key_up) {
@@ -84,8 +85,6 @@ bool parse_packet(uint8_t data, hid_quantel_tablet_report_t* tablet, hid_quantel
     tablet->y = (int16_t)(status.has_pen_data ? pen_data.y : 0);
     tablet->tip_pressure = pen_data.pressure;
 
-    // board_led_write(tablet->flags & 0x02);
-
     rat->button_1 = status.button_1;
     rat->button_2 = status.button_2;
     rat->button_3 = status.button_3;
@@ -96,6 +95,22 @@ bool parse_packet(uint8_t data, hid_quantel_tablet_report_t* tablet, hid_quantel
 
     if (status.has_keycode) {
         handle_key_state(keycode, status.key_up);
+    }
+
+    // The AKE0793091 doesn't send key-up messages, so we inject one into the next USB packet.
+    if (get_keyboard() == KBD_AKE0793091) {
+        if (had_keydown) {
+            had_keydown = false;
+            modifier_keys = 0;
+            key_rollover[0] = HID_KEY_NONE;
+            key_rollover[1] = HID_KEY_NONE;
+            key_rollover[2] = HID_KEY_NONE;
+            key_rollover[3] = HID_KEY_NONE;
+            key_rollover[4] = HID_KEY_NONE;
+            key_rollover[5] = HID_KEY_NONE;
+        }
+
+        had_keydown = status.has_keycode && !status.key_up;
     }
 
     keyboard->modifier = modifier_keys;

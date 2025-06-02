@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef KBD_AKE079339
-#define KBD_AKE079339
+#ifndef KBD_AKE079339_H
+#define KBD_AKE079339_H
 
 #include "class/hid/hid.h"
 
@@ -111,9 +111,6 @@ enum KEYCODE_AKE079339 {
     AKE079339_KEY_LEFT = 0x77,
     AKE079339_KEY_RIGHT = 0x78
 };
-
-
-#define KEY_UNDEFINED (0x03 | 0xF000)
 
 // Maps AKE079339 keycodes to their USB HID equivalent, or as close as seems to make sense.
 // See page 53 of https://www.usb.org/sites/default/files/documents/hut1_12v2.pdf for details.

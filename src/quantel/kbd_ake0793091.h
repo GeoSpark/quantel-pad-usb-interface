@@ -23,48 +23,34 @@
  *
  */
 
-#ifndef QUANTEL_H
-#define QUANTEL_H
+#ifndef KBD_AKE0793091_H
+#define KBD_AKE0793091_H
 
-#include <stdbool.h>
-#include <stdint.h>
+#include "class/hid/hid.h"
 
-#define QUANTEL_PACKET_SIZE 9
+// Keycode mapping for the Access Keyboards Ltd AKE0793091 keyboard
 
-typedef struct {
-    uint8_t packet_start: 1; // Always 1
-    uint8_t has_keycode: 1;
-    uint8_t has_pen_data: 1;
-    uint8_t unknown1: 1;
-    uint8_t joystick_down: 1;
-    uint8_t joystick_up: 1;
-    uint8_t joystick_right: 1;
-    uint8_t joystick_left: 1;
-    uint8_t byte_marker: 1; // Always 0
-    uint8_t button_5: 1;
-    uint8_t unknown2: 1;
-    uint8_t key_up: 1;
-    uint8_t button_4: 1;
-    uint8_t button_3: 1;
-    uint8_t button_2: 1;
-    uint8_t button_1: 1;
-} status_t;
+enum KEYCODE_AKE0793091 {
+    AKE0793091_KEY_LEFT = 0x08,
+    AKE0793091_KEY_RIGHT = 0x09,
+    AKE0793091_KEY_DOWN = 0x0A,
+    AKE0793091_KEY_UP = 0x0B,
+};
 
-typedef struct {
-    int16_t x;
-    int16_t y;
-    uint8_t pressure;
-} pen_data_t;
 
-typedef enum {
-    KBD_AKE079339,
-    KBD_AKE0793091,
-    KBD_NUM_KEYBOARDS
-} keyboards_t;
+const uint8_t USB_HID_MAPPING_AKE0793091[] = {
+    HID_KEY_NONE,
+    HID_KEY_NONE,
+    HID_KEY_NONE,
+    HID_KEY_NONE,
+    HID_KEY_NONE,
+    HID_KEY_NONE,
+    HID_KEY_NONE,
+    HID_KEY_NONE,
+    HID_KEY_ARROW_LEFT,      //     AKE0793091_KEY_LEFT
+    HID_KEY_ARROW_RIGHT,     //     AKE0793091_KEY_RIGHT
+    HID_KEY_ARROW_DOWN,      //     AKE0793091_KEY_DOWN
+    HID_KEY_ARROW_UP,        //     AKE0793091_KEY_UP
+};
 
-bool handle_packet(uint8_t data, status_t* status, pen_data_t* pen_data, uint8_t* keycode);
-void map_keycode(uint8_t keycode, uint8_t* usb_key, uint8_t* usb_modifiers);
-void set_keyboard(keyboards_t keyboard);
-keyboards_t get_keyboard();
-
-#endif //QUANTEL_H
+#endif //KBD_AKE0793091_H

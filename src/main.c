@@ -27,10 +27,16 @@
 #include "hid.h"
 #include "cdc.h"
 #include "commands.h"
+#include "flash_config.h"
+#include "quantel.h"
 
 #include "bsp/board_api.h"
 #include "tusb.h"
 #include "pico/bootrom.h"
+
+typedef struct {
+    keyboards_t keyboard;
+} hw_config_t;
 
 
 int main(void) {
@@ -49,6 +55,14 @@ int main(void) {
     }
 
     setup_uart();
+
+    hw_config_t config = {.keyboard = KBD_AKE079339};
+
+    if (!read_config(&config, sizeof(hw_config_t))) {
+        write_config(&config, sizeof(hw_config_t));
+    }
+
+    set_keyboard(config.keyboard);
 
     uint8_t buffer[64];
 

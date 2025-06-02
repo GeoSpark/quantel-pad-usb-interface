@@ -23,48 +23,12 @@
  *
  */
 
-#ifndef QUANTEL_H
-#define QUANTEL_H
-
+#ifndef FLASH_CONFIG_H
+#define FLASH_CONFIG_H
 #include <stdbool.h>
-#include <stdint.h>
+#include <stddef.h>
 
-#define QUANTEL_PACKET_SIZE 9
+bool read_config(void* out_data, size_t len);
+bool write_config(const void* new_data, size_t len);
 
-typedef struct {
-    uint8_t packet_start: 1; // Always 1
-    uint8_t has_keycode: 1;
-    uint8_t has_pen_data: 1;
-    uint8_t unknown1: 1;
-    uint8_t joystick_down: 1;
-    uint8_t joystick_up: 1;
-    uint8_t joystick_right: 1;
-    uint8_t joystick_left: 1;
-    uint8_t byte_marker: 1; // Always 0
-    uint8_t button_5: 1;
-    uint8_t unknown2: 1;
-    uint8_t key_up: 1;
-    uint8_t button_4: 1;
-    uint8_t button_3: 1;
-    uint8_t button_2: 1;
-    uint8_t button_1: 1;
-} status_t;
-
-typedef struct {
-    int16_t x;
-    int16_t y;
-    uint8_t pressure;
-} pen_data_t;
-
-typedef enum {
-    KBD_AKE079339,
-    KBD_AKE0793091,
-    KBD_NUM_KEYBOARDS
-} keyboards_t;
-
-bool handle_packet(uint8_t data, status_t* status, pen_data_t* pen_data, uint8_t* keycode);
-void map_keycode(uint8_t keycode, uint8_t* usb_key, uint8_t* usb_modifiers);
-void set_keyboard(keyboards_t keyboard);
-keyboards_t get_keyboard();
-
-#endif //QUANTEL_H
+#endif //FLASH_CONFIG_H

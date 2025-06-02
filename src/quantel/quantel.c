@@ -25,6 +25,7 @@
 
 #include "quantel.h"
 #include "kbd_ake079339.h"
+#include "kbd_ake0793091.h"
 
 typedef enum {
     PACKET_STATE_STATUS,
@@ -40,11 +41,37 @@ typedef enum {
 } PACKET_STATE;
 
 PACKET_STATE current_state = PACKET_STATE_IDLE;
-
 uint8_t checksum;
+keyboards_t current_keyboard = KBD_AKE079339;
+const uint8_t* keyboard_mapping = USB_HID_MAPPING_AKE079339;
 
-uint8_t map_keycode(const uint8_t keycode) {
-    return USB_HID_MAPPING_AKE079339[keycode];
+void map_keycode(const uint8_t keycode, uint8_t* usb_key, uint8_t* usb_modifiers) {
+    if (current_keyboard == KBD_AKE079339) {
+        uint8_t key = keyboard_mapping[keycode];
+        if (key >= HID_KEY_CONTROL_LEFT && key <= HID_KEY_GUI_RIGHT) {
+            *usb_modifiers = key;
+            *usb_key = HID_KEY_NONE;
+        } else {
+            *usb_modifiers = HID_KEY_NONE;
+            *usb_key = key;
+        }
+    } else if (current_keyboard == KBD_AKE0793091) {
+        // Some complex logic here to extract out modifier keys.
+    }
+}
+
+void set_keyboard(keyboards_t keyboard) {
+    if (keyboard == KBD_AKE079339) {
+        keyboard_mapping = USB_HID_MAPPING_AKE079339;
+    } else if (keyboard == KBD_AKE0793091) {
+        keyboard_mapping = USB_HID_MAPPING_AKE0793091;
+    }
+
+    current_keyboard = keyboard;
+}
+
+keyboards_t get_keyboard() {
+    return current_keyboard;
 }
 
 // Set up a simple state machine. When the function returns true we have received a valid packet.
